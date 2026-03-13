@@ -1,0 +1,52 @@
+{
+  "brief_id": "brief_1773387699",
+  "markdown": "# Executive Search Briefing Note\n**Role: Senior Infrastructure Portfolio Manager**\n**Sector: Superannuation / Institutional Asset Management | Location: Australia**\n*Prepared for internal circulation — strictly confidential*\n\n---\n\n## 1. Role Summary\n\nThe mandate requires a senior investment professional to manage a global infrastructure portfolio (core and core-plus) from within an asset-owner investment team. Key accountabilities include direct portfolio performance ownership, external manager selection and monitoring, and portfolio construction across unlisted and listed infrastructure. The role sits inside an internal investments function — meaning candidates from pure advisory, consulting, or banking backgrounds are disqualified at screen. Seniority expectations imply meaningful autonomous decision-making authority and investment committee-level engagement.\n\n---\n\n## 2. Market Overview\n\n**Talent supply is structurally constrained.** The pool of professionals with *direct* asset-owner infrastructure portfolio management experience in Australia is narrow for several reasons:\n\n- Australian superannuation funds have historically employed lean internal investment teams, outsourcing manager oversight to investment consultants; internal build-out has accelerated only in the last 5–7 years (led by AustralianSuper, Aware Super, Cbus, HESTA, and VFMC), meaning the cohort of genuinely experienced practitioners is small and relatively junior in aggregate.\n- Core and core-plus infrastructure mandates are a subset of the broader infrastructure universe; candidates with this *specific* mandate focus — rather than opportunistic or value-add infrastructure — are rarer still.\n- Multi-manager / fund-of-funds infrastructure experience (a stated requirement) further narrows the field, as many Australian super funds have historically held assets directly or via co-investments rather than through manager-of-managers structures.\n- Competition for this profile is high: peer funds are simultaneously expanding internal capabilities, creating a seller's market for qualified candidates.\n\n**International supply exists** but is subject to right-to-work and relocation constraints, and offshore candidates typically lack familiarity with the Australian superannuation regulatory environment — a preferred qualification.\n\n---\n\n## 3. Candidate Landscape\n\n*Note: Fit scores for all three shortlisted candidates sit in the 46–53 range, suggesting partial alignment. No candidate has been assessed at high fit. Claims below are grounded in available evidence only; gaps are noted explicitly.*\n\n---\n\n### cand_101 — Fit Score: 52.5\n**Positive indicators:**\n- Direct evidence of required skills confirmed in summary/evidence (specific skills not enumerated in supplied data; treat as provisionally positive).\n- Location confirmed as Australia — no relocation or right-to-work risk.\n\n**Uncertainties / gaps:**\n- No explicit confirmation of asset-owner (superannuation / institutional) background versus advisory or consulting. **This must be verified at screen** given it is a hard disqualifier.\n- Depth of unlisted versus listed infrastructure exposure unclear from available evidence.\n- Multi-manager portfolio construction experience not confirmed.\n\n---\n\n### cand_001 — Fit Score: 52.5\n**Positive indicators:**\n- Direct evidence of required skills confirmed; location aligns (Australia-based).\n- Profile mirrors cand_101 in scoring profile — may reflect similar background typology.\n\n**Uncertainties / gaps:**\n- Same caveats as cand_101 apply: asset-owner mandate accountability and unlisted infrastructure depth are unconfirmed.\n- Without differentiated evidence from cand_101, ranking between the two is not possible at this stage.\n- ESG integration and investment committee reporting exposure not evidenced.\n\n---\n\n### cand_104 — Fit Score: 46.5\n**Positive indicators:**\n- Direct evidence of required skills present.\n\n**Risks:**\n- Location not confirmed as Australia — **right-to-work / relocation risk is live and must be resolved before advancing**. This is a hard disqualifier if not resolved.\n- Lower fit score suggests skill coverage is narrower or evidence thinner relative to the two higher-ranked candidates.\n- Recommend deferring full evaluation until location status is clarified.\n\n---\n\n### Overall Shortlist Assessment\nThe shortlist as presented is **thin and carries material uncertainty**. A fit ceiling of ~52% across all candidates indicates the current pipeline does not yet contain a high-confidence hire. Additional sourcing is warranted in parallel with advancing these three candidates to first-stage screen.\n\n---\n\n## 4. Recommended Search Strategy\n\n### Immediate Actions\n1. **Advance cand_101 and cand_001 to structured screen** focused on: (a) confirming asset-owner vs. advisory background; (b) mapping unlisted infrastructure portfolio accountability; (c) validating multi-manager/manager selection experience.\n2. **Resolve cand_104 location status within 48 hours** before investing further evaluation resource.\n\n### Parallel Sourcing — Priority Target Pools\n\n| Target Pool | Rationale |\n|---|---|\n| Internal investment teams at AustralianSuper, Aware Super, Cbus, UniSuper, HESTA, VFMC, Future Fund | Highest-density source of asset-owner infrastructure PMs in Australia |\n| Infrastructure investment staff at QIC, IFM Investors, Hastings (Northen Trust), Morrison & Co | Fund-manager-side but with direct asset management accountability; acceptable if portfolio-level P",
+  "role_spec": {
+    "title": "Senior Infrastructure Portfolio Manager",
+    "seniority": "Senior",
+    "sector": "Superannuation / Institutional Asset Management",
+    "location": "Australia",
+    "required_skills": [
+      "Portfolio management across global infrastructure strategies",
+      "Core and core-plus infrastructure mandate oversight",
+      "External manager selection and monitoring",
+      "Portfolio construction",
+      "Direct accountability for portfolio performance outcomes",
+      "Experience within an internal investments team (asset owner or similar)"
+    ],
+    "preferred_skills": [
+      "Experience at an Australian superannuation fund or comparable institutional investor (pension, sovereign wealth fund)",
+      "Familiarity with Australian superannuation regulatory environment",
+      "Exposure to unlisted and listed infrastructure asset classes",
+      "Stakeholder management and investment committee reporting",
+      "ESG integration within infrastructure portfolios"
+    ],
+    "search_keywords": [
+      "infrastructure portfolio manager",
+      "superannuation infrastructure",
+      "core infrastructure",
+      "core-plus infrastructure",
+      "manager selection infrastructure",
+      "global infrastructure",
+      "unlisted infrastructure",
+      "asset owner investments team",
+      "real assets portfolio management",
+      "institutional infrastructure investing",
+      "Australia superannuation fund investments"
+    ],
+    "disqualifiers": [
+      "Candidates with infrastructure experience limited to advisory, consulting or investment banking without direct portfolio management accountability",
+      "No experience managing or constructing multi-manager or fund-of-funds infrastructure portfolios",
+      "Experience restricted solely to listed infrastructure without unlisted or direct asset exposure",
+      "Candidates based outside Australia without clear willingness to relocate or right to work in Australia"
+    ],
+    "_prompt": {
+      "id": "role_parser",
+      "version": "2026-03-13.v1"
+    }
+  },
+  "citations": [],
+  "generated_at": "2026-03-13T07:41:39.329214+00:00",
+  "approved": false,
+  "approved_at": null
+}
