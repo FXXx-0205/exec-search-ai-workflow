@@ -1,4 +1,4 @@
-# PPP AI Search Copilot
+# AI Search Copilot
 
 AI-powered executive search workflow system for candidate research, market mapping, and briefing generation — designed to feel like an internal tool for a boutique executive search firm.
 

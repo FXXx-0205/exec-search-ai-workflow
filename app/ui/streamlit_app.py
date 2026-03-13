@@ -5,9 +5,9 @@ import os
 import streamlit as st
 
 
-st.set_page_config(page_title="PPP AI Search Copilot", layout="wide")
+st.set_page_config(page_title="AI Search Copilot", layout="wide")
 
-st.title("PPP AI Search Copilot")
+st.title("AI Search Copilot")
 st.caption("Demo: Role intake → Retrieval → Candidate ranking → Brief generation")
 
 api_base = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
