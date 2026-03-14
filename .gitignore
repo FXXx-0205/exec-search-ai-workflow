@@ -7,6 +7,8 @@ __pycache__/
 .DS_Store
 .streamlit/
 data/vector_db/
+data/processed/briefs/
+data/audit.jsonl
 *.sqlite3
 .env
 dist/
