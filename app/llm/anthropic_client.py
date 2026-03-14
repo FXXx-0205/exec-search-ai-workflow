@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
-import os
+import logging
 from dataclasses import dataclass
 from typing import Any
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -44,7 +46,11 @@ class ClaudeClient:
         if extra:
             kwargs.update(extra)
 
-        resp = self._client.messages.create(**kwargs)
+        try:
+            resp = self._client.messages.create(**kwargs)
+        except Exception as exc:
+            logger.warning("Claude API failed, falling back to mock response: %s", exc)
+            return self._mock(system_prompt=system_prompt, user_prompt=user_prompt)
         parts: list[str] = []
         for block in resp.content:
             if getattr(block, "type", None) == "text":
@@ -83,4 +89,3 @@ class ClaudeClient:
             )
 
         return user_prompt
-

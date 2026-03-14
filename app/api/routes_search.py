@@ -1,8 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.api.dependencies.auth import require_permission
+from app.api.dependencies.integrations import get_ats_adapter, get_crm_adapter, get_document_store_adapter
+from app.adapters.ats import ATSAdapter
+from app.adapters.crm import CRMAdapter
+from app.adapters.doc_store import DocumentStoreAdapter
 from app.llm.anthropic_client import ClaudeClient
+from app.models.auth import AccessContext
 from app.models.search_request import CandidatesRequest, IntakeRequest, RankRequest
 from app.retrieval.retriever import Retriever
 from app.retrieval.vector_store import VectorStore
@@ -22,40 +28,68 @@ _retriever = Retriever(store=_store)
 
 
 @router.post("/intake")
-def intake(req: IntakeRequest) -> dict:
+def intake(
+    req: IntakeRequest,
+    access: AccessContext = Depends(require_permission("search:run")),
+    doc_store: DocumentStoreAdapter = Depends(get_document_store_adapter),
+    crm: CRMAdapter = Depends(get_crm_adapter),
+) -> dict:
     role_spec = _parser.parse_role(req.raw_input)
     retrieval_context = _retriever.retrieve_for_role(role_spec, top_k=5)
-    return {"role_spec": role_spec, "retrieval_context": retrieval_context, "vector_store_mode": _store.mode}
+    project = crm.get_project(req.project_id) if req.project_id else None
+    knowledge_docs = doc_store.list_documents("firm_profiles")
+    return {
+        "role_spec": role_spec,
+        "retrieval_context": retrieval_context,
+        "vector_store_mode": _store.mode,
+        "tenant_id": access.tenant_id,
+        "project": project.__dict__ if project else None,
+        "knowledge_sources": [doc.__dict__ for doc in knowledge_docs[:5]],
+    }
 
 
 @router.post("/candidates")
-def candidates(req: CandidatesRequest) -> dict:
-    pool = _candidates.load_demo_candidates()
+def candidates(
+    req: CandidatesRequest,
+    access: AccessContext = Depends(require_permission("search:run")),
+    ats: ATSAdapter = Depends(get_ats_adapter),
+) -> dict:
+    service = CandidateService(ats_adapter=ats)
+    pool = service.load_candidates(req.role_spec, tenant_id=access.tenant_id)
     filtered = _candidates.filter_candidates(req.role_spec, pool)
-    return {"candidates": filtered, "count": len(filtered)}
+    return {"candidates": filtered, "count": len(filtered), "tenant_id": access.tenant_id}
 
 
 @router.post("/rank")
-def rank(req: RankRequest) -> dict:
-    pool = _candidates.load_demo_candidates()
+def rank(
+    req: RankRequest,
+    access: AccessContext = Depends(require_permission("search:run")),
+    ats: ATSAdapter = Depends(get_ats_adapter),
+) -> dict:
+    service = CandidateService(ats_adapter=ats)
+    pool = service.load_candidates(req.role_spec, tenant_id=access.tenant_id)
     by_id = {c.get("candidate_id"): c for c in pool}
     selected = [by_id[cid] for cid in req.candidate_ids if cid in by_id]
     ranked = _ranker.score_candidates(req.role_spec, selected or pool)
-    return {"ranked_candidates": ranked, "count": len(ranked)}
+    return {"ranked_candidates": ranked, "count": len(ranked), "tenant_id": access.tenant_id}
 
 
 @router.post("/run")
-def run(req: IntakeRequest) -> dict:
+def run(
+    req: IntakeRequest,
+    access: AccessContext = Depends(require_permission("search:run")),
+    ats: ATSAdapter = Depends(get_ats_adapter),
+) -> dict:
     """
     Agentic demo entrypoint: run end-to-end workflow and return a compact result.
     """
-    state = run_workflow(req.raw_input)
+    state = run_workflow(req.raw_input, tenant_id=access.tenant_id, ats_adapter=ats)
     return {
         "request_id": state.get("request_id"),
+        "tenant_id": access.tenant_id,
         "role_spec": state.get("parsed_role"),
         "retrieval_context": state.get("retrieval_context", []),
         "ranked_candidates": (state.get("ranking_results") or [])[:10],
         "brief_markdown": state.get("brief_draft"),
         "critique_feedback": state.get("critique_feedback", []),
     }
-

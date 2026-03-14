@@ -2,8 +2,19 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.config import settings
+
 
 class RankingService:
+    def __init__(
+        self,
+        *,
+        weights: dict[str, float] | None = None,
+        strategy_version: str | None = None,
+    ):
+        self.weights = weights or settings.ranking_weights()
+        self.strategy_version = strategy_version or settings.ranking_strategy_version
+
     def score_candidates(self, role_spec: dict[str, Any], candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
         required = [s.lower() for s in (role_spec.get("required_skills") or []) if isinstance(s, str)]
         preferred = [s.lower() for s in (role_spec.get("preferred_skills") or []) if isinstance(s, str)]
@@ -27,12 +38,12 @@ class RankingService:
             stability_signal = 0.5
 
             final = (
-                0.30 * skill_match
-                + 0.20 * seniority_match
-                + 0.20 * sector_relevance
-                + 0.15 * functional_similarity
-                + 0.10 * location_alignment
-                + 0.05 * stability_signal
+                self.weights["skill_match"] * skill_match
+                + self.weights["seniority_match"] * seniority_match
+                + self.weights["sector_relevance"] * sector_relevance
+                + self.weights["functional_similarity"] * functional_similarity
+                + self.weights["location_alignment"] * location_alignment
+                + self.weights["stability_signal"] * stability_signal
             )
 
             reasoning = []
@@ -57,6 +68,8 @@ class RankingService:
                     "seniority_score": round(seniority_match * 100, 1),
                     "sector_relevance_score": round(sector_relevance * 100, 1),
                     "location_score": round(location_alignment * 100, 1),
+                    "ranking_version": self.strategy_version,
+                    "ranking_weights": self.weights,
                     "reasoning": reasoning or ["General alignment based on available signals."],
                     "risks": risks,
                 }
@@ -64,4 +77,3 @@ class RankingService:
 
         ranked.sort(key=lambda x: x["fit_score"], reverse=True)
         return ranked
-

@@ -1,21 +1,12 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
-
-@dataclass(frozen=True)
-class StoredBrief:
-    brief_id: str
-    markdown: str
-    role_spec: dict[str, Any]
-    citations: list[str]
-    generated_at: str
-    approved: bool
-    approved_at: str | None = None
+from app.config import settings
+from app.models.auth import ApprovalStatus
+from app.repositories.interfaces import StoredBrief
 
 
 class BriefRepo:
@@ -23,8 +14,8 @@ class BriefRepo:
     MVP: file-backed storage under data/processed/briefs.
     """
 
-    def __init__(self, root_dir: str = "./data/processed/briefs"):
-        self.root = Path(root_dir)
+    def __init__(self, root_dir: str | None = None):
+        self.root = Path(root_dir or settings.brief_storage_dir)
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _path(self, brief_id: str) -> Path:
@@ -42,20 +33,31 @@ class BriefRepo:
         data = json.loads(p.read_text(encoding="utf-8"))
         return StoredBrief(**data)
 
-    def approve(self, brief_id: str) -> StoredBrief | None:
+    def decide(
+        self,
+        brief_id: str,
+        *,
+        status: ApprovalStatus,
+        decided_by: str,
+        comment: str | None = None,
+    ) -> StoredBrief | None:
         b = self.get(brief_id)
         if not b:
             return None
         now = datetime.now(timezone.utc).isoformat()
-        approved = StoredBrief(
+        updated = StoredBrief(
             brief_id=b.brief_id,
             markdown=b.markdown,
             role_spec=b.role_spec,
             citations=b.citations,
             generated_at=b.generated_at,
-            approved=True,
+            tenant_id=b.tenant_id,
+            project_id=b.project_id,
+            created_by=b.created_by,
+            approval_status=status,
+            approval_notes=comment,
+            approved_by=decided_by,
             approved_at=now,
         )
-        self.save(approved)
-        return approved
-
+        self.save(updated)
+        return updated

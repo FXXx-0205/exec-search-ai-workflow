@@ -20,6 +20,7 @@ class BriefService:
         role_spec: dict[str, Any],
         ranked_candidates: list[dict[str, Any]],
         retrieval_context: list[dict[str, Any]] | None = None,
+        generation_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         ctx_lines: list[str] = []
         if retrieval_context:
@@ -55,5 +56,5 @@ class BriefService:
             "generated_at": now,
             "citations": [c.get("source") for c in (retrieval_context or []) if c.get("source")],
             "prompt": {"id": BRIEF_GENERATOR_PROMPT_ID, "version": BRIEF_GENERATOR_PROMPT_VERSION},
+            "generation_context": generation_context or {},
         }
-

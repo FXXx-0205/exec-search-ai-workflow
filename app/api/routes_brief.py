@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends
 
+from app.api.dependencies.auth import require_permission
+from app.core.audit import AuditEvent, AuditLogger
+from app.core.exceptions import ForbiddenError, NotFoundError
 from app.llm.anthropic_client import ClaudeClient
-from app.models.search_request import BriefGenerateRequest
+from app.models.auth import AccessContext, ApprovalStatus
+from app.models.search_request import BriefApprovalRequest, BriefGenerateRequest
+from app.repositories.factory import get_brief_repository
+from app.repositories.interfaces import StoredBrief
 from app.retrieval.retriever import Retriever
 from app.retrieval.vector_store import VectorStore
-from app.repositories.brief_repo import BriefRepo, StoredBrief
 from app.services.brief_service import BriefService
 from app.services.candidate_service import CandidateService
 from app.services.ranking_service import RankingService
@@ -19,18 +24,32 @@ _candidates = CandidateService()
 _ranker = RankingService()
 _store = VectorStore()
 _retriever = Retriever(store=_store)
-_repo = BriefRepo()
+_repo = get_brief_repository()
+_audit = AuditLogger()
 
 
 @router.post("/generate")
-def generate(req: BriefGenerateRequest) -> dict:
+def generate(
+    req: BriefGenerateRequest,
+    access: AccessContext = Depends(require_permission("brief:generate")),
+) -> dict:
     role_spec = req.role_spec or {"title": "Unspecified", "search_keywords": []}
     pool = _candidates.load_demo_candidates()
     by_id = {c.get("candidate_id"): c for c in pool}
     selected = [by_id[cid] for cid in (req.candidate_ids or []) if cid in by_id] or pool
     ranked = _ranker.score_candidates(role_spec, selected)
     retrieval_context = _retriever.retrieve_for_role(role_spec, top_k=5)
-    out = _brief.generate_markdown(role_spec=role_spec, ranked_candidates=ranked, retrieval_context=retrieval_context)
+    generation_context = {
+        "tenant_id": access.tenant_id,
+        "project_id": req.project_id or access.project_id,
+        "actor_id": access.actor.user_id,
+    }
+    out = _brief.generate_markdown(
+        role_spec=role_spec,
+        ranked_candidates=ranked,
+        retrieval_context=retrieval_context,
+        generation_context=generation_context,
+    )
     _repo.save(
         StoredBrief(
             brief_id=out["brief_id"],
@@ -38,44 +57,117 @@ def generate(req: BriefGenerateRequest) -> dict:
             role_spec=role_spec,
             citations=out.get("citations", []),
             generated_at=out["generated_at"],
-            approved=False,
+            tenant_id=access.tenant_id,
+            project_id=req.project_id or access.project_id,
+            created_by=access.actor.user_id,
+            approval_status=ApprovalStatus.PENDING,
         )
     )
-    return out
+    _audit.log(
+        AuditEvent(
+            event_type="brief_generated",
+            request_id=out["brief_id"],
+            payload={"citations": out.get("citations", []), "prompt": out.get("prompt"), "generation_context": generation_context},
+            tenant_id=access.tenant_id,
+            project_id=req.project_id or access.project_id,
+            actor_id=access.actor.user_id,
+        )
+    )
+    return {**out, "approval_status": ApprovalStatus.PENDING}
 
 
 @router.post("/approve/{brief_id}")
-def approve(brief_id: str) -> dict:
-    b = _repo.approve(brief_id)
+def approve(
+    brief_id: str,
+    req: BriefApprovalRequest,
+    access: AccessContext = Depends(require_permission("brief:approve")),
+) -> dict:
+    b = _repo.decide(
+        brief_id,
+        status=req.status,
+        decided_by=access.actor.user_id,
+        comment=req.comment,
+    )
     if not b:
-        raise HTTPException(status_code=404, detail="brief not found")
-    return {"brief_id": b.brief_id, "approved": b.approved, "approved_at": b.approved_at}
+        raise NotFoundError("Brief not found.", details={"brief_id": brief_id})
+    if b.tenant_id != access.tenant_id:
+        raise ForbiddenError("Brief belongs to a different tenant.", details={"brief_id": brief_id})
+    _audit.log(
+        AuditEvent(
+            event_type="brief_decided",
+            request_id=brief_id,
+            payload={"approval_status": b.approval_status, "approval_notes": b.approval_notes},
+            tenant_id=access.tenant_id,
+            project_id=b.project_id,
+            actor_id=access.actor.user_id,
+        )
+    )
+    return {
+        "brief_id": b.brief_id,
+        "approval_status": b.approval_status,
+        "approved_by": b.approved_by,
+        "approved_at": b.approved_at,
+        "approval_notes": b.approval_notes,
+    }
 
 
 @router.get("/{brief_id}")
-def get_brief(brief_id: str) -> dict:
+def get_brief(
+    brief_id: str,
+    access: AccessContext = Depends(require_permission("brief:generate")),
+) -> dict:
     b = _repo.get(brief_id)
     if not b:
-        raise HTTPException(status_code=404, detail="brief not found")
+        raise NotFoundError("Brief not found.", details={"brief_id": brief_id})
+    if b.tenant_id != access.tenant_id:
+        raise ForbiddenError("Brief belongs to a different tenant.", details={"brief_id": brief_id})
+    _audit.log(
+        AuditEvent(
+            event_type="brief_viewed",
+            request_id=brief_id,
+            payload={"approval_status": b.approval_status},
+            tenant_id=access.tenant_id,
+            project_id=b.project_id,
+            actor_id=access.actor.user_id,
+        )
+    )
     return {
         "brief_id": b.brief_id,
         "markdown": b.markdown,
-        "approved": b.approved,
+        "approval_status": b.approval_status,
+        "approved_by": b.approved_by,
         "approved_at": b.approved_at,
+        "project_id": b.project_id,
+        "tenant_id": b.tenant_id,
+        "created_by": b.created_by,
         "generated_at": b.generated_at,
         "citations": b.citations,
     }
 
 
 @router.get("/{brief_id}/export")
-def export_brief(brief_id: str) -> dict:
+def export_brief(
+    brief_id: str,
+    access: AccessContext = Depends(require_permission("brief:export")),
+) -> dict:
     """
     Client-facing export gate: must be approved.
     """
     b = _repo.get(brief_id)
     if not b:
-        raise HTTPException(status_code=404, detail="brief not found")
-    if not b.approved:
-        raise HTTPException(status_code=403, detail="brief not approved")
+        raise NotFoundError("Brief not found.", details={"brief_id": brief_id})
+    if b.tenant_id != access.tenant_id:
+        raise ForbiddenError("Brief belongs to a different tenant.", details={"brief_id": brief_id})
+    if b.approval_status != ApprovalStatus.APPROVED:
+        raise ForbiddenError("Brief is not approved for export.", details={"brief_id": brief_id})
+    _audit.log(
+        AuditEvent(
+            event_type="brief_exported",
+            request_id=brief_id,
+            payload={"approval_status": b.approval_status},
+            tenant_id=access.tenant_id,
+            project_id=b.project_id,
+            actor_id=access.actor.user_id,
+        )
+    )
     return {"brief_id": b.brief_id, "markdown": b.markdown, "exported": True}
-
