@@ -45,14 +45,17 @@ class VectorStore:
             try:
                 res = self._collection.query(query_texts=[query_text], n_results=top_k, where=where)
                 out: list[dict[str, Any]] = []
-                for i in range(len(res.get("ids", [[]])[0])):
+                ids = res.get("ids") or [[]]
+                documents = res.get("documents") or [[]]
+                metadatas = res.get("metadatas") or [[{}]]
+                for i in range(len(ids[0])):
                     out.append(
                         {
-                            "doc_id": res["ids"][0][i],
-                            "text": res["documents"][0][i],
-                            "metadata": (res.get("metadatas") or [[{}]])[0][i] or {},
-                            "source": ((res.get("metadatas") or [[{}]])[0][i] or {}).get("source"),
-                            "title": ((res.get("metadatas") or [[{}]])[0][i] or {}).get("title"),
+                            "doc_id": ids[0][i],
+                            "text": documents[0][i],
+                            "metadata": metadatas[0][i] or {},
+                            "source": (metadatas[0][i] or {}).get("source"),
+                            "title": (metadatas[0][i] or {}).get("title"),
                         }
                     )
                 return out
@@ -63,9 +66,10 @@ class VectorStore:
         q = query_text.lower()
         scored = []
         for d in self._memory_docs:
+            if where and any((d.get("metadata") or {}).get(key) != value for key, value in where.items()):
+                continue
             text = (d.get("text") or "").lower()
             s = sum(1 for token in q.split() if token and token in text)
             scored.append((s, d))
         scored.sort(key=lambda x: x[0], reverse=True)
         return [d for s, d in scored[:top_k] if s > 0]
-

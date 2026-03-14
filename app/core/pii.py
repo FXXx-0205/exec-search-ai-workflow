@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 
-
 _EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
 _PHONE_RE = re.compile(r"\b(\+?\d[\d\s().-]{7,}\d)\b")
 

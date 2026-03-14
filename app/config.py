@@ -1,14 +1,47 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+PROFILE_DEFAULTS: dict[str, dict[str, str]] = {
+    "local": {
+        "log_level": "INFO",
+        "storage_backend": "file",
+        "crm_provider": "mock",
+        "ats_provider": "mock",
+        "doc_store_provider": "mock",
+    },
+    "test": {
+        "log_level": "WARNING",
+        "storage_backend": "file",
+        "crm_provider": "mock",
+        "ats_provider": "mock",
+        "doc_store_provider": "mock",
+    },
+    "staging": {
+        "log_level": "INFO",
+        "storage_backend": "sqlite",
+        "crm_provider": "mock",
+        "ats_provider": "mock",
+        "doc_store_provider": "mock",
+    },
+    "prod": {
+        "log_level": "INFO",
+        "storage_backend": "sqlite",
+        "crm_provider": "mock",
+        "ats_provider": "mock",
+        "doc_store_provider": "mock",
+    },
+}
 
-    app_env: str = "dev"
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=(".env",), env_file_encoding="utf-8", extra="ignore")
+
+    app_env: str = "local"
     log_level: str = "INFO"
 
     anthropic_api_key: str | None = None
@@ -49,4 +82,19 @@ class Settings(BaseSettings):
         return data
 
 
-settings = Settings()
+def load_settings(app_env: str | None = None) -> Settings:
+    env_name = (app_env or os.getenv("APP_ENV") or "local").lower()
+    env_file = (".env", f".env.{env_name}")
+    loaded = Settings(_env_file=env_file)  # type: ignore[call-arg]
+    defaults = PROFILE_DEFAULTS.get(env_name, PROFILE_DEFAULTS["local"])
+
+    for field_name, default_value in defaults.items():
+        env_var_name = field_name.upper()
+        if env_var_name not in os.environ:
+            setattr(loaded, field_name, default_value)
+
+    loaded.app_env = env_name
+    return loaded
+
+
+settings = load_settings()

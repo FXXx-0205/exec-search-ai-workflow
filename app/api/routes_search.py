@@ -2,20 +2,20 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from app.api.dependencies.auth import require_permission
-from app.api.dependencies.integrations import get_ats_adapter, get_crm_adapter, get_document_store_adapter
 from app.adapters.ats import ATSAdapter
 from app.adapters.crm import CRMAdapter
 from app.adapters.doc_store import DocumentStoreAdapter
+from app.api.dependencies.auth import require_permission
+from app.api.dependencies.integrations import get_ats_adapter, get_crm_adapter, get_document_store_adapter
 from app.llm.anthropic_client import ClaudeClient
 from app.models.auth import AccessContext
 from app.models.search_request import CandidatesRequest, IntakeRequest, RankRequest
 from app.retrieval.retriever import Retriever
 from app.retrieval.vector_store import VectorStore
-from app.workflows.candidate_search_graph import run_workflow
 from app.services.candidate_service import CandidateService
 from app.services.job_parser_service import JobParserService
 from app.services.ranking_service import RankingService
+from app.workflows.candidate_search_graph import run_workflow
 
 router = APIRouter()
 

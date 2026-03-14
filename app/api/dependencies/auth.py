@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import Depends, Header
 
 from app.core.exceptions import ForbiddenError, ValidationError
-from app.models.auth import AccessContext, ROLE_PERMISSIONS, UserIdentity, UserRole
+from app.models.auth import ROLE_PERMISSIONS, AccessContext, UserIdentity, UserRole
 
 
 def get_access_context(

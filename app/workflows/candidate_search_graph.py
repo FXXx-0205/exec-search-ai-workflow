@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import Any
 
 from app.adapters.ats import ATSAdapter
 from app.agents.critique_agent import CritiqueAgent

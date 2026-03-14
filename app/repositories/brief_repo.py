@@ -33,6 +33,31 @@ class BriefRepo:
         data = json.loads(p.read_text(encoding="utf-8"))
         return StoredBrief(**data)
 
+    def list(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str | None = None,
+        approval_status: ApprovalStatus | None = None,
+        limit: int = 50,
+    ) -> list[StoredBrief]:
+        briefs: list[StoredBrief] = []
+        for path in sorted(self.root.glob("*.json"), reverse=True):
+            try:
+                brief = StoredBrief(**json.loads(path.read_text(encoding="utf-8")))
+            except (json.JSONDecodeError, TypeError, ValueError):
+                continue
+            if brief.tenant_id != tenant_id:
+                continue
+            if project_id is not None and brief.project_id != project_id:
+                continue
+            if approval_status is not None and brief.approval_status != approval_status:
+                continue
+            briefs.append(brief)
+            if len(briefs) >= limit:
+                break
+        return briefs
+
     def decide(
         self,
         brief_id: str,

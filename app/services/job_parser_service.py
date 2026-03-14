@@ -27,8 +27,8 @@ def _safe_json_extract(text: str) -> dict[str, Any]:
     # 1) 直接解析整段
     try:
         return json.loads(stripped)
-    except Exception:
-        pass
+    except json.JSONDecodeError:
+        logger.debug("Direct JSON parse failed; trying fenced block extraction.")
 
     # 2) 去掉 markdown code fences
     fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", stripped, re.IGNORECASE)
@@ -36,7 +36,7 @@ def _safe_json_extract(text: str) -> dict[str, Any]:
         inner = fence_match.group(1).strip()
         try:
             return json.loads(inner)
-        except Exception:
+        except json.JSONDecodeError:
             logger.warning("Failed to parse JSON from fenced block, falling back to brace search.")
 
     # 3) 匹配第一个 JSON 对象
@@ -45,7 +45,7 @@ def _safe_json_extract(text: str) -> dict[str, Any]:
         candidate = brace_match.group(0)
         try:
             return json.loads(candidate)
-        except Exception:
+        except json.JSONDecodeError:
             logger.warning("Failed to parse JSON from first brace object, returning empty dict.")
 
     logger.error("LLM output did not contain parseable JSON; returning empty role_spec.")
@@ -81,4 +81,3 @@ class JobParserService:
         role.setdefault("disqualifiers", [])
         role["_prompt"] = {"id": ROLE_PARSER_PROMPT_ID, "version": ROLE_PARSER_PROMPT_VERSION}
         return role
-

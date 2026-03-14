@@ -99,6 +99,45 @@ class SqliteBriefRepository(SQLiteRepository):
             approved_at=row["approved_at"],
         )
 
+    def list(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str | None = None,
+        approval_status: ApprovalStatus | None = None,
+        limit: int = 50,
+    ) -> list[StoredBrief]:
+        query = "SELECT * FROM briefs WHERE tenant_id = ?"
+        params: list[Any] = [tenant_id]
+        if project_id is not None:
+            query += " AND project_id = ?"
+            params.append(project_id)
+        if approval_status is not None:
+            query += " AND approval_status = ?"
+            params.append(approval_status)
+        query += " ORDER BY generated_at DESC LIMIT ?"
+        params.append(limit)
+
+        with self._connect() as connection:
+            rows = connection.execute(query, tuple(params)).fetchall()
+        return [
+            StoredBrief(
+                brief_id=row["brief_id"],
+                markdown=row["markdown"],
+                role_spec=json.loads(row["role_spec"]),
+                citations=json.loads(row["citations"]),
+                generated_at=row["generated_at"],
+                tenant_id=row["tenant_id"],
+                project_id=row["project_id"],
+                created_by=row["created_by"],
+                approval_status=ApprovalStatus(row["approval_status"]),
+                approval_notes=row["approval_notes"],
+                approved_by=row["approved_by"],
+                approved_at=row["approved_at"],
+            )
+            for row in rows
+        ]
+
     def decide(
         self,
         brief_id: str,
@@ -168,3 +207,38 @@ class SqliteAuditRepository(SQLiteRepository):
                     event["ts"],
                 ),
             )
+
+    def list_events(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str | None = None,
+        event_type: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        query = "SELECT * FROM audit_events WHERE tenant_id = ?"
+        params: list[Any] = [tenant_id]
+        if project_id is not None:
+            query += " AND project_id = ?"
+            params.append(project_id)
+        if event_type is not None:
+            query += " AND event_type = ?"
+            params.append(event_type)
+        query += " ORDER BY ts DESC LIMIT ?"
+        params.append(limit)
+
+        with self._connect() as connection:
+            rows = connection.execute(query, tuple(params)).fetchall()
+
+        return [
+            {
+                "event_type": row["event_type"],
+                "request_id": row["request_id"],
+                "tenant_id": row["tenant_id"],
+                "project_id": row["project_id"],
+                "actor_id": row["actor_id"],
+                "payload": json.loads(row["payload"]),
+                "ts": row["ts"],
+            }
+            for row in rows
+        ]

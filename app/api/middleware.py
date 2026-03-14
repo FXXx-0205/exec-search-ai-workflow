@@ -6,6 +6,7 @@ import uuid
 
 from fastapi import FastAPI, Request
 
+from app.core.metrics import observe_request
 from app.core.request_context import set_request_id
 
 logger = logging.getLogger("app.request")
@@ -23,6 +24,7 @@ def register_middleware(app: FastAPI) -> None:
         duration_ms = round((time.perf_counter() - started_at) * 1000, 2)
 
         response.headers["x-request-id"] = request_id
+        observe_request(duration_ms)
         logger.info(
             "Request completed",
             extra={

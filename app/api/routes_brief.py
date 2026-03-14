@@ -76,6 +76,38 @@ def generate(
     return {**out, "approval_status": ApprovalStatus.PENDING}
 
 
+@router.get("")
+def list_briefs(
+    access: AccessContext = Depends(require_permission("brief:generate")),
+    project_id: str | None = None,
+    approval_status: ApprovalStatus | None = None,
+    limit: int = 50,
+) -> dict:
+    briefs = _repo.list(
+        tenant_id=access.tenant_id,
+        project_id=project_id,
+        approval_status=approval_status,
+        limit=limit,
+    )
+    return {
+        "briefs": [
+            {
+                "brief_id": brief.brief_id,
+                "tenant_id": brief.tenant_id,
+                "project_id": brief.project_id,
+                "approval_status": brief.approval_status,
+                "created_by": brief.created_by,
+                "generated_at": brief.generated_at,
+                "approved_by": brief.approved_by,
+                "approved_at": brief.approved_at,
+            }
+            for brief in briefs
+        ],
+        "count": len(briefs),
+        "tenant_id": access.tenant_id,
+    }
+
+
 @router.post("/approve/{brief_id}")
 def approve(
     brief_id: str,

@@ -27,6 +27,15 @@ class BriefRepository(Protocol):
 
     def get(self, brief_id: str) -> StoredBrief | None: ...
 
+    def list(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str | None = None,
+        approval_status: ApprovalStatus | None = None,
+        limit: int = 50,
+    ) -> list[StoredBrief]: ...
+
     def decide(
         self,
         brief_id: str,
@@ -39,3 +48,12 @@ class BriefRepository(Protocol):
 
 class AuditRepository(Protocol):
     def append(self, event: dict[str, Any]) -> None: ...
+
+    def list_events(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str | None = None,
+        event_type: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]: ...

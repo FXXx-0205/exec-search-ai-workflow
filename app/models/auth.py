@@ -42,8 +42,8 @@ class AccessContext(BaseModel):
 
 
 ROLE_PERMISSIONS: dict[UserRole, set[str]] = {
-    UserRole.ADMIN: {"search:run", "brief:generate", "brief:approve", "brief:export"},
-    UserRole.CONSULTANT: {"search:run", "brief:generate", "brief:approve", "brief:export"},
+    UserRole.ADMIN: {"search:run", "brief:generate", "brief:approve", "brief:export", "audit:view"},
+    UserRole.CONSULTANT: {"search:run", "brief:generate", "brief:approve", "brief:export", "audit:view"},
     UserRole.RESEARCHER: {"search:run", "brief:generate"},
-    UserRole.COMPLIANCE: {"search:run", "brief:approve", "brief:export"},
+    UserRole.COMPLIANCE: {"search:run", "brief:approve", "brief:export", "audit:view"},
 }

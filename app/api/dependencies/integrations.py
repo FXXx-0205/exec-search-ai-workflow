@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from app.config import settings
-from app.core.exceptions import ValidationError
 from app.adapters.ats import ATSAdapter
 from app.adapters.crm import CRMAdapter
 from app.adapters.doc_store import DocumentStoreAdapter
 from app.adapters.mock import MockATSAdapter, MockCRMAdapter, MockDocumentStoreAdapter
+from app.config import settings
+from app.core.exceptions import ValidationError
 
 _crm = MockCRMAdapter()
 _ats = MockATSAdapter()

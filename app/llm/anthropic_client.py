@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from dataclasses import dataclass
 from typing import Any
 
 from app.config import settings
+from app.core.metrics import observe_llm_call
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,14 @@ class ClaudeClient:
         max_tokens: int = 1200,
         extra: dict[str, Any] | None = None,
     ) -> str:
+        started_at = time.perf_counter()
+        estimated_tokens = max(1, (len(system_prompt) + len(user_prompt)) // 4)
         if not self._client:
+            observe_llm_call(
+                round((time.perf_counter() - started_at) * 1000, 2),
+                used_fallback=True,
+                estimated_tokens=estimated_tokens,
+            )
             return self._mock(system_prompt=system_prompt, user_prompt=user_prompt)
 
         kwargs: dict[str, Any] = {
@@ -50,11 +59,21 @@ class ClaudeClient:
             resp = self._client.messages.create(**kwargs)
         except Exception as exc:
             logger.warning("Claude API failed, falling back to mock response: %s", exc)
+            observe_llm_call(
+                round((time.perf_counter() - started_at) * 1000, 2),
+                used_fallback=True,
+                estimated_tokens=estimated_tokens,
+            )
             return self._mock(system_prompt=system_prompt, user_prompt=user_prompt)
         parts: list[str] = []
         for block in resp.content:
             if getattr(block, "type", None) == "text":
                 parts.append(block.text)
+        observe_llm_call(
+            round((time.perf_counter() - started_at) * 1000, 2),
+            used_fallback=False,
+            estimated_tokens=estimated_tokens,
+        )
         return "\n".join(parts).strip()
 
     def _mock(self, system_prompt: str, user_prompt: str) -> str:

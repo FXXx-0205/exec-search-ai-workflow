@@ -12,7 +12,7 @@ from app.core.request_context import get_request_id
 logger = logging.getLogger(__name__)
 
 
-def _error_payload(code: str, message: str, details: dict | list | None = None) -> dict:
+def _error_payload(code: str, message: str, details: object = None) -> dict:
     return {
         "error": {
             "code": code,
