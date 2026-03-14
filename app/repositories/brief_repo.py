@@ -40,8 +40,10 @@ class BriefRepo:
         project_id: str | None = None,
         approval_status: ApprovalStatus | None = None,
         limit: int = 50,
+        offset: int = 0,
     ) -> list[StoredBrief]:
         briefs: list[StoredBrief] = []
+        matched = 0
         for path in sorted(self.root.glob("*.json"), reverse=True):
             try:
                 brief = StoredBrief(**json.loads(path.read_text(encoding="utf-8")))
@@ -52,6 +54,9 @@ class BriefRepo:
             if project_id is not None and brief.project_id != project_id:
                 continue
             if approval_status is not None and brief.approval_status != approval_status:
+                continue
+            if matched < offset:
+                matched += 1
                 continue
             briefs.append(brief)
             if len(briefs) >= limit:

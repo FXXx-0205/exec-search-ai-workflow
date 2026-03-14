@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 
-from app.repositories.sqlite_repo import SqliteAuditRepository, SqliteBriefRepository
+from app.repositories.sqlite_repo import SqliteAuditRepository, SqliteBriefRepository, SqliteCandidateRepository
 
 
 def main() -> None:
@@ -12,6 +12,7 @@ def main() -> None:
 
     SqliteBriefRepository(args.database_url)
     SqliteAuditRepository(args.database_url)
+    SqliteCandidateRepository(args.database_url)
     print(f"Initialized SQLite storage at {args.database_url}")
 
 

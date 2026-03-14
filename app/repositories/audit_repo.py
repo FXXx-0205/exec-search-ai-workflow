@@ -24,11 +24,13 @@ class JsonlAuditRepository:
         project_id: str | None = None,
         event_type: str | None = None,
         limit: int = 100,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         if not self.path.exists():
             return []
 
         events: list[dict[str, Any]] = []
+        matched = 0
         for line in reversed(self.path.read_text(encoding="utf-8").splitlines()):
             if not line.strip():
                 continue
@@ -41,6 +43,9 @@ class JsonlAuditRepository:
             if project_id is not None and event.get("project_id") != project_id:
                 continue
             if event_type is not None and event.get("event_type") != event_type:
+                continue
+            if matched < offset:
+                matched += 1
                 continue
             events.append(event)
             if len(events) >= limit:

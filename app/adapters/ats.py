@@ -14,6 +14,12 @@ class CandidateProfile:
     source_system: str
     source_id: str
     synced_at: datetime
+    current_company: str | None = None
+    primary_email: str | None = None
+    location: str | None = None
+    application_ids: list[str] | None = None
+    tag_names: list[str] | None = None
+    attachment_count: int = 0
 
 
 @dataclass(frozen=True)

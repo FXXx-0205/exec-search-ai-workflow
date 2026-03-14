@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from app.models.auth import ApprovalStatus
-from app.repositories.interfaces import StoredBrief
+from app.repositories.interfaces import StoredBrief, StoredCandidate
 
 
 def _sqlite_path(database_url: str) -> Path:
@@ -106,6 +106,7 @@ class SqliteBriefRepository(SQLiteRepository):
         project_id: str | None = None,
         approval_status: ApprovalStatus | None = None,
         limit: int = 50,
+        offset: int = 0,
     ) -> list[StoredBrief]:
         query = "SELECT * FROM briefs WHERE tenant_id = ?"
         params: list[Any] = [tenant_id]
@@ -115,8 +116,8 @@ class SqliteBriefRepository(SQLiteRepository):
         if approval_status is not None:
             query += " AND approval_status = ?"
             params.append(approval_status)
-        query += " ORDER BY generated_at DESC LIMIT ?"
-        params.append(limit)
+        query += " ORDER BY generated_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
 
         with self._connect() as connection:
             rows = connection.execute(query, tuple(params)).fetchall()
@@ -215,6 +216,7 @@ class SqliteAuditRepository(SQLiteRepository):
         project_id: str | None = None,
         event_type: str | None = None,
         limit: int = 100,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         query = "SELECT * FROM audit_events WHERE tenant_id = ?"
         params: list[Any] = [tenant_id]
@@ -224,8 +226,8 @@ class SqliteAuditRepository(SQLiteRepository):
         if event_type is not None:
             query += " AND event_type = ?"
             params.append(event_type)
-        query += " ORDER BY ts DESC LIMIT ?"
-        params.append(limit)
+        query += " ORDER BY ts DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
 
         with self._connect() as connection:
             rows = connection.execute(query, tuple(params)).fetchall()
@@ -240,5 +242,113 @@ class SqliteAuditRepository(SQLiteRepository):
                 "payload": json.loads(row["payload"]),
                 "ts": row["ts"],
             }
+            for row in rows
+        ]
+
+
+class SqliteCandidateRepository(SQLiteRepository):
+    def __init__(self, database_url: str):
+        super().__init__(database_url)
+        self._ensure_schema()
+
+    def _ensure_schema(self) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS candidates (
+                    tenant_id TEXT NOT NULL,
+                    candidate_id TEXT NOT NULL,
+                    full_name TEXT NOT NULL,
+                    current_title TEXT NOT NULL,
+                    current_company TEXT,
+                    location TEXT,
+                    primary_email TEXT,
+                    summary TEXT NOT NULL,
+                    evidence TEXT NOT NULL,
+                    source_system TEXT NOT NULL,
+                    source_id TEXT NOT NULL,
+                    application_ids TEXT NOT NULL,
+                    tag_names TEXT NOT NULL,
+                    attachment_count INTEGER NOT NULL,
+                    synced_at TEXT NOT NULL,
+                    PRIMARY KEY (tenant_id, candidate_id)
+                )
+                """
+            )
+
+    def upsert_many(self, candidates: list[StoredCandidate]) -> None:
+        with self._connect() as connection:
+            connection.executemany(
+                """
+                INSERT OR REPLACE INTO candidates (
+                    tenant_id, candidate_id, full_name, current_title, current_company, location,
+                    primary_email, summary, evidence, source_system, source_id, application_ids,
+                    tag_names, attachment_count, synced_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        candidate.tenant_id,
+                        candidate.candidate_id,
+                        candidate.full_name,
+                        candidate.current_title,
+                        candidate.current_company,
+                        candidate.location,
+                        candidate.primary_email,
+                        candidate.summary,
+                        json.dumps(candidate.evidence, ensure_ascii=False),
+                        candidate.source_system,
+                        candidate.source_id,
+                        json.dumps(candidate.application_ids, ensure_ascii=False),
+                        json.dumps(candidate.tag_names, ensure_ascii=False),
+                        candidate.attachment_count,
+                        candidate.synced_at,
+                    )
+                    for candidate in candidates
+                ],
+            )
+
+    def list(
+        self,
+        *,
+        tenant_id: str,
+        search_text: str | None = None,
+        source_system: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[StoredCandidate]:
+        query = "SELECT * FROM candidates WHERE tenant_id = ?"
+        params: list[Any] = [tenant_id]
+        if source_system is not None:
+            query += " AND source_system = ?"
+            params.append(source_system)
+        if search_text:
+            query += " AND (lower(full_name) LIKE ? OR lower(current_title) LIKE ? OR lower(summary) LIKE ?)"
+            pattern = f"%{search_text.lower()}%"
+            params.extend([pattern, pattern, pattern])
+        query += " ORDER BY synced_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        with self._connect() as connection:
+            rows = connection.execute(query, tuple(params)).fetchall()
+
+        return [
+            StoredCandidate(
+                tenant_id=row["tenant_id"],
+                candidate_id=row["candidate_id"],
+                full_name=row["full_name"],
+                current_title=row["current_title"],
+                current_company=row["current_company"],
+                location=row["location"],
+                primary_email=row["primary_email"],
+                summary=row["summary"],
+                evidence=json.loads(row["evidence"]),
+                source_system=row["source_system"],
+                source_id=row["source_id"],
+                application_ids=json.loads(row["application_ids"]),
+                tag_names=json.loads(row["tag_names"]),
+                attachment_count=int(row["attachment_count"]),
+                synced_at=row["synced_at"],
+            )
             for row in rows
         ]

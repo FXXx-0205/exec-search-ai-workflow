@@ -5,7 +5,6 @@ from typing import Any
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 PROFILE_DEFAULTS: dict[str, dict[str, str]] = {
     "local": {
         "log_level": "INFO",
@@ -43,8 +42,16 @@ class Settings(BaseSettings):
 
     app_env: str = "local"
     log_level: str = "INFO"
+    auth_mode: str = "hybrid"
 
     anthropic_api_key: str | None = None
+    jwt_secret: str | None = None
+    jwt_issuer: str | None = None
+    jwt_audience: str | None = None
+    greenhouse_harvest_api_key: str | None = None
+    greenhouse_base_url: str = "https://harvest.greenhouse.io/v1"
+    greenhouse_per_page: int = 100
+    greenhouse_max_pages: int = 10
 
     database_url: str = "sqlite:///./data/app.db"
     chroma_persist_dir: str = "./data/vector_db"

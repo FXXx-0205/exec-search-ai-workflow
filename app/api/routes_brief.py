@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.api.dependencies.auth import require_permission
 from app.core.audit import AuditEvent, AuditLogger
@@ -79,15 +79,17 @@ def generate(
 @router.get("")
 def list_briefs(
     access: AccessContext = Depends(require_permission("brief:generate")),
-    project_id: str | None = None,
-    approval_status: ApprovalStatus | None = None,
-    limit: int = 50,
+    project_id: str | None = Query(default=None),
+    approval_status: ApprovalStatus | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
 ) -> dict:
     briefs = _repo.list(
         tenant_id=access.tenant_id,
         project_id=project_id,
         approval_status=approval_status,
         limit=limit,
+        offset=offset,
     )
     return {
         "briefs": [
@@ -105,6 +107,8 @@ def list_briefs(
         ],
         "count": len(briefs),
         "tenant_id": access.tenant_id,
+        "offset": offset,
+        "limit": limit,
     }
 
 

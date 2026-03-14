@@ -22,6 +22,25 @@ class StoredBrief:
     approved_at: str | None = None
 
 
+@dataclass(frozen=True)
+class StoredCandidate:
+    tenant_id: str
+    candidate_id: str
+    full_name: str
+    current_title: str
+    current_company: str | None
+    location: str | None
+    primary_email: str | None
+    summary: str
+    evidence: list[str]
+    source_system: str
+    source_id: str
+    application_ids: list[str]
+    tag_names: list[str]
+    attachment_count: int
+    synced_at: str
+
+
 class BriefRepository(Protocol):
     def save(self, brief: StoredBrief) -> None: ...
 
@@ -34,6 +53,7 @@ class BriefRepository(Protocol):
         project_id: str | None = None,
         approval_status: ApprovalStatus | None = None,
         limit: int = 50,
+        offset: int = 0,
     ) -> list[StoredBrief]: ...
 
     def decide(
@@ -56,4 +76,19 @@ class AuditRepository(Protocol):
         project_id: str | None = None,
         event_type: str | None = None,
         limit: int = 100,
+        offset: int = 0,
     ) -> list[dict[str, Any]]: ...
+
+
+class CandidateRepository(Protocol):
+    def upsert_many(self, candidates: list[StoredCandidate]) -> None: ...
+
+    def list(
+        self,
+        *,
+        tenant_id: str,
+        search_text: str | None = None,
+        source_system: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[StoredCandidate]: ...

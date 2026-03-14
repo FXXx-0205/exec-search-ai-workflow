@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.adapters.ats import ATSAdapter, CandidateDocument, CandidateProfile
-from app.adapters.crm import CRMAdapter, ClientAccount, SearchProject
+from app.adapters.crm import ClientAccount, CRMAdapter, SearchProject
 from app.adapters.doc_store import DocumentStoreAdapter, KnowledgeDocument
 
 

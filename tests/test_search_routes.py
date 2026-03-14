@@ -42,3 +42,32 @@ def test_search_returns_validation_error_for_unsupported_provider(client: TestCl
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "validation_error"
+
+
+def test_search_returns_validation_error_when_greenhouse_missing_api_key(client: TestClient) -> None:
+    settings.ats_provider = "greenhouse"
+    settings.greenhouse_harvest_api_key = None
+    try:
+        response = client.post(
+            "/search/candidates",
+            json={"role_spec": {"search_keywords": ["portfolio"]}},
+            headers={"x-user-role": "researcher", "x-tenant-id": "tenant_search"},
+        )
+    finally:
+        settings.ats_provider = "mock"
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "validation_error"
+
+
+def test_search_candidates_accepts_provider_filters(client: TestClient) -> None:
+    response = client.post(
+        "/search/candidates",
+        json={
+            "role_spec": {"search_keywords": ["portfolio"]},
+            "provider_filters": {"updated_after": "2026-03-10T00:00:00Z"},
+        },
+        headers={"x-user-role": "researcher", "x-tenant-id": "tenant_search"},
+    )
+
+    assert response.status_code == 200

@@ -8,6 +8,7 @@ from app.agents.planner_agent import PlannerAgent
 from app.core.audit import AuditEvent, AuditLogger
 from app.core.pii import mask_pii
 from app.llm.anthropic_client import ClaudeClient
+from app.repositories.factory import get_candidate_repository
 from app.retrieval.retriever import Retriever
 from app.retrieval.vector_store import VectorStore
 from app.services.brief_service import BriefService
@@ -26,7 +27,7 @@ def run_workflow(raw_input: str, *, tenant_id: str = "demo-tenant", ats_adapter:
     parser = JobParserService(llm=llm)
     store = VectorStore()
     retriever = Retriever(store=store)
-    candidate_svc = CandidateService(ats_adapter=ats_adapter)
+    candidate_svc = CandidateService(ats_adapter=ats_adapter, candidate_repository=get_candidate_repository())
     ranker = RankingService()
     brief_svc = BriefService(llm=llm)
     planner = PlannerAgent()

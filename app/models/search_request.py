@@ -13,6 +13,7 @@ class IntakeRequest(BaseModel):
 class CandidatesRequest(BaseModel):
     project_id: str | None = None
     role_spec: dict
+    provider_filters: dict | None = None
 
 
 class RankRequest(BaseModel):

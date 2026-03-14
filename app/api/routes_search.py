@@ -10,6 +10,7 @@ from app.api.dependencies.integrations import get_ats_adapter, get_crm_adapter, 
 from app.llm.anthropic_client import ClaudeClient
 from app.models.auth import AccessContext
 from app.models.search_request import CandidatesRequest, IntakeRequest, RankRequest
+from app.repositories.factory import get_candidate_repository
 from app.retrieval.retriever import Retriever
 from app.retrieval.vector_store import VectorStore
 from app.services.candidate_service import CandidateService
@@ -54,8 +55,8 @@ def candidates(
     access: AccessContext = Depends(require_permission("search:run")),
     ats: ATSAdapter = Depends(get_ats_adapter),
 ) -> dict:
-    service = CandidateService(ats_adapter=ats)
-    pool = service.load_candidates(req.role_spec, tenant_id=access.tenant_id)
+    service = CandidateService(ats_adapter=ats, candidate_repository=get_candidate_repository())
+    pool = service.load_candidates(req.role_spec, tenant_id=access.tenant_id, provider_filters=req.provider_filters)
     filtered = _candidates.filter_candidates(req.role_spec, pool)
     return {"candidates": filtered, "count": len(filtered), "tenant_id": access.tenant_id}
 
@@ -66,7 +67,7 @@ def rank(
     access: AccessContext = Depends(require_permission("search:run")),
     ats: ATSAdapter = Depends(get_ats_adapter),
 ) -> dict:
-    service = CandidateService(ats_adapter=ats)
+    service = CandidateService(ats_adapter=ats, candidate_repository=get_candidate_repository())
     pool = service.load_candidates(req.role_spec, tenant_id=access.tenant_id)
     by_id = {c.get("candidate_id"): c for c in pool}
     selected = [by_id[cid] for cid in req.candidate_ids if cid in by_id]
