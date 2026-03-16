@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import json
 import sqlite3
 from dataclasses import asdict
@@ -174,7 +175,7 @@ class SqliteBriefRepository(SQLiteRepository):
         approval_status: ApprovalStatus | None = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> list[StoredBrief]:
+    ) -> builtins.list[StoredBrief]:
         query = "SELECT * FROM briefs WHERE tenant_id = ?"
         params: list[Any] = [tenant_id]
         if project_id is not None:
@@ -193,7 +194,7 @@ class SqliteBriefRepository(SQLiteRepository):
             for row in rows
         ]
 
-    def list_briefs_by_project(self, *, project_id: str, tenant_id: str) -> list[StoredBrief]:
+    def list_briefs_by_project(self, *, project_id: str, tenant_id: str) -> builtins.list[StoredBrief]:
         return self.list(tenant_id=tenant_id, project_id=project_id, limit=1000, offset=0)
 
     def get_latest_brief_by_project(self, *, project_id: str, tenant_id: str) -> StoredBrief | None:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from datetime import datetime, timezone
+from typing import Any
 from uuid import uuid4
 
 from app.adapters.ats import ATSAdapter
@@ -19,9 +20,7 @@ from app.repositories.factory import (
 from app.repositories.interfaces import StoredBrief, StoredSearchResultSnapshot, StoredSearchRun
 from app.retrieval.retriever import Retriever
 from app.retrieval.vector_store import VectorStore
-from app.services.brief_service import BriefService
 from app.services.candidate_service import CandidateService
-from app.services.job_parser_service import JobParserService
 from app.services.ranking_service import RankingService
 
 
@@ -29,11 +28,11 @@ class SearchWorkflow:
     def __init__(
         self,
         *,
-        parser: JobParserService,
-        candidate_service: CandidateService,
+        parser: Any,
+        candidate_service: Any,
         ranking_service: RankingService,
-        brief_service: BriefService,
-        retriever: Retriever | None = None,
+        brief_service: Any,
+        retriever: Any | None = None,
         project_repo=None,
         run_repo=None,
         brief_repo=None,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import json
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -48,8 +49,8 @@ class BriefRepo:
         approval_status: ApprovalStatus | None = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> list[StoredBrief]:
-        briefs: list[StoredBrief] = []
+    ) -> builtins.list[StoredBrief]:
+        briefs: builtins.list[StoredBrief] = []
         matched = 0
         for path in sorted(self.root.glob("*.json"), reverse=True):
             try:
@@ -70,7 +71,7 @@ class BriefRepo:
                 break
         return briefs
 
-    def list_briefs_by_project(self, *, project_id: str, tenant_id: str) -> list[StoredBrief]:
+    def list_briefs_by_project(self, *, project_id: str, tenant_id: str) -> builtins.list[StoredBrief]:
         return self.list(tenant_id=tenant_id, project_id=project_id, limit=1000, offset=0)
 
     def get_latest_brief_by_project(self, *, project_id: str, tenant_id: str) -> StoredBrief | None:

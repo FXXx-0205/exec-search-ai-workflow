@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from app.api.routes_projects import build_project_summary
+from app.models.workflow import BriefStatus, SearchRunStatus
 from app.repositories.brief_repo import BriefRepo
 from app.repositories.interfaces import StoredBrief, StoredSearchProject, StoredSearchRun
 from app.repositories.project_repo import ProjectRepo
 from app.repositories.search_run_repo import SearchRunRepo
-from app.models.workflow import BriefStatus, SearchRunStatus
 
 
 def test_project_summary_maps_run_and_brief_statuses(tmp_path, monkeypatch) -> None:

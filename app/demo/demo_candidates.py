@@ -608,7 +608,8 @@ def load_demo_candidates() -> list[dict[str, Any]]:
 
 def enrich_with_demo_fields(candidate: dict[str, Any], demo_lookup: dict[str, dict[str, Any]]) -> dict[str, Any]:
     enriched = deepcopy(candidate)
-    demo_candidate = demo_lookup.get(candidate.get("candidate_id"))
+    candidate_id = candidate.get("candidate_id")
+    demo_candidate = demo_lookup.get(candidate_id) if isinstance(candidate_id, str) else None
     if demo_candidate:
         merged = deepcopy(demo_candidate)
         merged.update({k: v for k, v in candidate.items() if v not in (None, "", [], {})})

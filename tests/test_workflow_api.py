@@ -69,7 +69,6 @@ def test_project_and_workflow_api_happy_path(client, monkeypatch, tmp_path) -> N
     run_detail = run_repo.get_run(run_id)
     assert run_detail is not None
     assert run_detail.run_status == "completed"
-    assert run_repo.get_run(run_id).run_status == "completed"
 
     results_response = client.get(
         f"/projects/{project_id}/runs/{run_id}/results",

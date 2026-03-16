@@ -22,7 +22,7 @@ from app.repositories.factory import (
     get_search_result_snapshot_repository,
     get_search_run_repository,
 )
-from app.repositories.interfaces import StoredSearchProject
+from app.repositories.interfaces import StoredBrief, StoredSearchProject, StoredSearchRun
 from app.services.brief_service import BriefService
 from app.services.candidate_service import CandidateService
 from app.services.job_parser_service import JobParserService
@@ -232,11 +232,11 @@ def get_project_review(
         raise NotFoundError("Project not found.", details={"project_id": project_id})
     summary = build_project_summary(project_id, access.tenant_id)
     runs = _run_repo.list_runs_by_project(project_id=project_id, tenant_id=access.tenant_id)
-    latest_run = max(runs, key=lambda item: item.started_at) if runs else None
+    latest_run: StoredSearchRun | None = max(runs, key=lambda item: item.started_at) if runs else None
     snapshots = _project_repo.list_project_snapshots(project_id, tenant_id=access.tenant_id)
     latest_snapshot = max(snapshots, key=lambda item: item.created_at) if snapshots else None
     briefs = _brief_repo.list_briefs_by_project(project_id=project_id, tenant_id=access.tenant_id)
-    latest_brief = max(briefs, key=lambda item: item.version) if briefs else None
+    latest_brief: StoredBrief | None = max(briefs, key=lambda item: item.version) if briefs else None
     audit_events = _audit_repo.list_events(
         tenant_id=access.tenant_id,
         project_id=project_id,
@@ -275,8 +275,8 @@ def build_project_summary(project_id: str, tenant_id: str) -> ProjectSummary:
         raise NotFoundError("Project not found.", details={"project_id": project_id})
     runs = _run_repo.list_runs_by_project(project_id=project_id, tenant_id=tenant_id)
     briefs = _brief_repo.list_briefs_by_project(project_id=project_id, tenant_id=tenant_id)
-    latest_run = max(runs, key=lambda item: item.started_at) if runs else None
-    latest_brief = max(briefs, key=lambda item: item.version) if briefs else None
+    latest_run: StoredSearchRun | None = max(runs, key=lambda item: item.started_at) if runs else None
+    latest_brief: StoredBrief | None = max(briefs, key=lambda item: item.version) if briefs else None
     exported_briefs = [brief for brief in briefs if brief.status == BriefStatus.EXPORTED]
     has_pending = latest_brief is not None and latest_brief.status == BriefStatus.PENDING_APPROVAL
 
@@ -307,7 +307,8 @@ def build_project_summary(project_id: str, tenant_id: str) -> ProjectSummary:
     else:
         project_status = "in_progress"
 
-    last_exported_at = max((brief.exported_at for brief in exported_briefs if brief.exported_at), default=None)
+    last_exported_at_raw = max((brief.exported_at for brief in exported_briefs if brief.exported_at), default=None)
+    last_exported_at = datetime.fromisoformat(last_exported_at_raw) if last_exported_at_raw else None
     return ProjectSummary(
         project_id=project.project_id,
         tenant_id=project.tenant_id,

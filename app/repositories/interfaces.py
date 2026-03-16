@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -206,9 +207,9 @@ class BriefRepository(Protocol):
         approval_status: ApprovalStatus | None = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> list[StoredBrief]: ...
+    ) -> builtins.list[StoredBrief]: ...
 
-    def list_briefs_by_project(self, *, project_id: str, tenant_id: str) -> list[StoredBrief]: ...
+    def list_briefs_by_project(self, *, project_id: str, tenant_id: str) -> builtins.list[StoredBrief]: ...
 
     def get_latest_brief_by_project(self, *, project_id: str, tenant_id: str) -> StoredBrief | None: ...
 
@@ -295,6 +296,8 @@ class ProjectRepository(Protocol):
     def list_project_runs(self, project_id: str, *, tenant_id: str) -> list[StoredSearchRun]: ...
 
     def list_project_briefs(self, project_id: str, *, tenant_id: str) -> list[StoredBrief]: ...
+
+    def list_project_snapshots(self, project_id: str, *, tenant_id: str) -> list[StoredSearchResultSnapshot]: ...
 
 
 class SearchRunRepository(Protocol):
