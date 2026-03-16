@@ -1,33 +1,74 @@
 # exec-search-ai-workflow
 
-AI-powered executive search workflow system for candidate research, market mapping, and briefing generation — designed to feel like an internal tool for a boutique executive search firm.
+AI workflow system for executive search teams, designed around a real search mandate rather than a chat interface.
 
-## Why this project
+This project turns a search process into a structured workflow:
 
-- Decomposes a real executive search workflow into reusable agents/services
-- Uses Claude API (Anthropic) + RAG + explainable ranking (rules + narrative)
-- Built with regulated professional services in mind (PII minimization, audit-ready outputs)
+- role intake
+- candidate search
+- market mapping
+- explainable ranking
+- brief generation
+- approval and export
+- audit trail
 
-## MVP features (demo)
+The goal is not to produce a single prompt response. It is to make candidate research and briefing more structured, reviewable, and repeatable inside a boutique professional services workflow.
 
-- Role intake: raw request → structured `role_spec` JSON
-- Internal knowledge retrieval (RAG): ingest demo firm profiles → retrieve relevant context
-- Candidate search from demo pool
-- Explainable ranking (deterministic scoring + reasons/risks)
-- Brief generation (markdown)
-- Human approval gate (client-facing export requires approval)
-- Streamlit UI to run the whole workflow in minutes
+## Why I Built It
 
-## Tech stack
+I built this as a practical internal operating layer for executive search, especially for firms working in regulated, relationship-driven sectors like funds management and financial services.
+
+The project is meant to show how AI can support actual search work:
+
+- turning an unstructured mandate into a reusable project
+- reusing an internal candidate pool before jumping to broad sourcing
+- making ranking explainable instead of black-box
+- generating a client-facing brief with review and approval steps
+- preserving version history, export history, and audit visibility
+
+## What The System Does
+
+- **Project-centric workflow**
+  Every mandate is tracked as a project with runs, snapshots, brief versions, approvals, and audit history.
+- **Role intake and retrieval**
+  A raw JD or client brief is parsed into a structured role spec, then grounded with firm and market context via retrieval.
+- **Candidate search and review**
+  The system searches a demo/internal candidate pool, supports filtering, and surfaces candidate detail for researcher review.
+- **Market map view**
+  A lightweight market-mapping layer shows which firms appear in the pool and what institutional context is relevant to the mandate.
+- **Explainable ranking**
+  Candidates receive calibrated fit scores plus structured reasons, evidence, risks, missing information, and dimension-level match logic.
+- **Briefing and approval**
+  Ranked results can be turned into a markdown brief, submitted for approval, revised, approved, rejected, and exported.
+- **Audit and reviewability**
+  Key workflow events are stored and exposed through a reviewer console so a team can inspect what happened and when.
+
+## Why It Fits A Firm Like PPP
+
+- It is designed around executive search workflow rather than generic chat.
+- It reflects the realities of a lean boutique team: quick review, clear handoffs, and visible process state.
+- It treats approval, revision, and audit as first-class product features rather than afterthoughts.
+- It is practical to demo, extend, and connect to internal tools over time.
+
+## Demo Surfaces
+
+- **Guided Streamlit UI**
+  A 4-step flow for role intake, candidate search, market mapping, and brief creation.
+- **Reviewer Console**
+  A lightweight internal console for project summary, snapshots, brief versions, approval actions, export artifact viewing, and audit timeline.
+- **FastAPI backend**
+  Project, search, ranking, brief, audit, and review endpoints.
+
+## Core Stack
 
 - Python, FastAPI, Pydantic
-- Anthropic Claude API (`anthropic` SDK)
-- ChromaDB (optional; auto-fallback to in-memory retrieval if unavailable)
-- Streamlit (demo UI)
+- Anthropic Claude API (`anthropic` SDK) with mock fallback mode
+- ChromaDB for retrieval with in-memory fallback
+- Streamlit for internal demo and review surfaces
 
-## Quickstart / 使用说明
+## Quickstart
 
-### A. Local setup（English）
+### Local setup
 
 #### 1) Environment & config
 
@@ -93,97 +134,12 @@ streamlit run app/ui/streamlit_app.py
 
 The UI is split into 4 guided steps:
 
-1. **Role Intake** – paste JD, click “解析并检索上下文” to get structured `role_spec` + RAG context.  
+1. **Role Intake** – paste a JD or search brief, then parse it into a structured `role_spec` with retrieved context.  
 2. **Candidate Search** – fetch demo candidates, view in table + detail card.  
-3. **Market Map** – see top firms and firm profiles derived from RAG.  
-4. **Client Brief** – run ranking, generate markdown brief, approve before export.
+3. **Market Map** – review the current firm distribution and retrieved institutional context.  
+4. **Client Brief** – run ranking, generate a markdown brief, and approve before export.
 
 The left sidebar shows a **workflow timeline** (current step + completed steps). Navigation is primarily via the “Next” buttons at the bottom of each page.
-
----
-
-### B. 本地启动与使用（中文）
-
-#### 1）环境与配置
-
-```bash
-cp .env.example .env
-```
-
-- 如需真实调用 Claude，在 `.env` 里设置 `ANTHROPIC_API_KEY=你的真实 key`。  
-- 如果只想 0 成本体验，把这一项留空，系统会自动进入 **mock demo 模式**。
-
-#### 2）安装依赖
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-#### 3）准备 / 更新 demo 数据
-
-```bash
-python3 scripts/seed_demo_data.py
-python3 scripts/ingest_documents.py
-```
-
-当你修改了 `data/raw/sample_candidates/` 或 `data/raw/sample_firm_profiles/` 里的 JSON 时，重新执行：
-
-```bash
-python3 scripts/ingest_documents.py
-```
-
-#### 4）启动 API 服务
-
-```bash
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-健康检查：
-
-```bash
-curl http://127.0.0.1:8000/health
-```
-
-常用接口测试：
-
-```bash
-# 解析 JD 并检索上下文
-curl -X POST http://127.0.0.1:8000/search/intake \
-  -H "Content-Type: application/json" \
-  -d '{"raw_input":"A mid-sized industry super fund is seeking a Head of Real Assets to lead the strategy and implementation across infrastructure, real estate and private credit."}'
-
-# 一键跑完整 agent 工作流
-curl -X POST http://127.0.0.1:8000/search/run \
-  -H "Content-Type: application/json" \
-  -d '{"raw_input":"A mid-sized industry super fund is seeking a Head of Real Assets to lead the strategy and implementation across infrastructure, real estate and private credit."}'
-```
-
-#### 5）启动前端 UI（Streamlit）
-
-```bash
-streamlit run app/ui/streamlit_app.py
-```
-
-浏览器会打开本地地址（通常是 `http://localhost:8501`），按页面底部按钮依次完成流程：
-
-1. **Role Intake**  
-   - 粘贴一段英文 JD 或客户需求；  
-   - 点击“解析并检索上下文”，查看结构化 `role_spec` 与检索到的 `firm_*` 公司 profile。
-2. **Candidate Search**  
-   - 点击“从 demo 候选池检索”；  
-   - 在表格中浏览候选人，并从右侧详情卡片中查看 summary / evidence / source URLs。
-3. **Market Map**  
-   - 查看按候选人数聚合的 Top Firms 柱状图；  
-   - 展开每家机构的 RAG 上下文（基金公司 / 咨询机构描述）。
-4. **Client Brief**  
-   - 选择部分候选人 ID；  
-   - 点击“先打分（Ranking）”查看 fit score + reasoning/risks；  
-   - 点击“生成 Brief（markdown）”生成 briefing note；  
-   - 点击 “Approve（允许对外导出）” 后，再下载 markdown，模拟金融服务场景下的人审 gate。
-
-左侧的 **Workflow 时间线** 会高亮当前步骤，并用 ✅ 标记已完成的步骤，方便 Demo 过程中向面试官解释整个搜索工作流。
 
 ## API overview (MVP)
 
