@@ -80,31 +80,56 @@ class ClaudeClient:
         # 无 key 时用于 demo：只做极简规则解析/生成，保证端到端能跑通
         if "structured role specification" in system_prompt:
             lower = user_prompt.lower()
+            if "real assets" in lower:
+                title = "Head of Real Assets"
+                sector = "Real Assets"
+                keywords = ["real assets", "infrastructure", "portfolio", "institutional"]
+                required_skills = ["real assets", "portfolio management", "manager selection"]
+            elif "infrastructure" in lower:
+                title = "Infrastructure Portfolio Manager"
+                sector = "Infrastructure"
+                keywords = ["infrastructure", "portfolio manager", "real assets", "institutional"]
+                required_skills = ["infrastructure", "portfolio management", "institutional"]
+            else:
+                title = "Executive Role"
+                sector = "Funds Management" if "fund" in lower or "asset" in lower else "Unspecified"
+                keywords = ["institutional", "portfolio"]
+                required_skills = ["Institutional portfolio management"]
             role = {
-                "title": "Infrastructure Portfolio Manager" if "infrastructure" in lower else "Executive Role",
+                "title": title,
                 "seniority": "Senior" if "senior" in lower else "Unspecified",
-                "sector": "Funds Management" if "fund" in lower or "asset" in lower else "Unspecified",
+                "sector": sector,
                 "location": "Australia" if "australia" in lower else "Unspecified",
-                "required_skills": ["Institutional portfolio management"],
+                "required_skills": required_skills,
                 "preferred_skills": [],
-                "search_keywords": ["infrastructure", "portfolio manager", "institutional"],
+                "search_keywords": keywords,
                 "disqualifiers": [],
             }
             return json.dumps(role, ensure_ascii=False)
 
         if "briefing note" in system_prompt:
+            shortlist = []
+            for line in user_prompt.splitlines():
+                if line.startswith("- cand_") and "fit=" in line:
+                    shortlist.append(line[2:])
+            top_three = shortlist[:3]
+            landscape = "Top candidates show a clear infrastructure and portfolio-management core."
+            if not shortlist:
+                landscape = "Search returned limited candidate evidence in demo mode."
             return (
                 "## 1. Role Summary\n"
-                f"{user_prompt}\n\n"
+                "Search targets a senior infrastructure or real assets leader with institutional portfolio ownership.\n\n"
                 "## 2. Market Overview\n"
-                "Evidence is limited in demo mode; treat as draft.\n\n"
+                "The demo pool includes strong matches, adjacent oversight or strategy profiles, and deliberate noise candidates for ranking separation.\n\n"
                 "## 3. Candidate Landscape\n"
-                "See ranked shortlist below.\n\n"
+                f"Shortlist depth: {len(shortlist)} candidates reviewed.\n"
+                + ("\n".join(f"- {line}" for line in top_three) + "\n" if top_three else "")
+                + f"{landscape}\n\n"
                 "## 4. Recommended Search Strategy\n"
-                "- Use targeted mapping across relevant firms\n"
-                "- Prioritize directly evidenced skill match\n\n"
+                "- Prioritize directly evidenced infrastructure portfolio managers in Australia\n"
+                "- Keep adjacent real assets and governance talent as backup depth\n\n"
                 "## 5. Risks / Open Questions\n"
-                "- Evidence gaps: leadership scope, mobility, exact mandate type\n"
+                "- Validate mandate size, mobility, and direct decision-right ownership\n"
             )
 
         return user_prompt

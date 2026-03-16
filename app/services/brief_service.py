@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
+from uuid import uuid4
 
 from app.llm.anthropic_client import ClaudeClient
 from app.llm.prompts import (
@@ -9,6 +10,7 @@ from app.llm.prompts import (
     BRIEF_GENERATOR_PROMPT_VERSION,
     BRIEF_GENERATOR_SYSTEM_PROMPT,
 )
+from app.services.role_spec_utils import format_role_spec_for_prompt
 
 
 class BriefService:
@@ -33,12 +35,12 @@ class BriefService:
         shortlist_lines = ["## Ranked Shortlist (top)"]
         for r in top:
             shortlist_lines.append(
-                f"- {r.get('candidate_id')}: fit={r.get('fit_score')} reasons={'; '.join(r.get('reasoning') or [])}"
+                f"- {r.get('candidate_id')}: fit={r.get('fit_score')} reasons={'; '.join(r.get('reasons') or r.get('reasoning') or [])}"
             )
 
         user_prompt = (
             "Role spec:\n"
-            f"{role_spec}\n\n"
+            f"{format_role_spec_for_prompt(role_spec)}\n\n"
             + "\n".join(ctx_lines)
             + "\n\n"
             + "\n".join(shortlist_lines)
@@ -51,7 +53,7 @@ class BriefService:
 
         now = datetime.now(timezone.utc).isoformat()
         return {
-            "brief_id": f"brief_{int(datetime.now().timestamp())}",
+            "brief_id": f"brief_{uuid4().hex[:12]}",
             "markdown": md,
             "generated_at": now,
             "citations": [c.get("source") for c in (retrieval_context or []) if c.get("source")],

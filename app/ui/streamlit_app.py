@@ -39,11 +39,10 @@ with st.sidebar:
 
 st.markdown(
     """
-**使用方式（本地）**
-- 先启动 API：`uvicorn app.main:app --reload`
-- 再启动 UI：`streamlit run app/ui/streamlit_app.py`
+**How To Run Locally**
+- Start the API: `uvicorn app.main:app --reload`
+- Start the UI: `streamlit run app/ui/streamlit_app.py`
 
-按照页面底部的“下一步”按钮逐步完成流程；左侧 Workflow 仅作为进度指示。
+Move through the flow using the navigation buttons at the bottom of each page. The left-side workflow panel is a progress indicator.
 """
 )
-

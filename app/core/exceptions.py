@@ -49,6 +49,16 @@ class ForbiddenError(AppError):
         )
 
 
+class ConflictError(AppError):
+    def __init__(self, message: str, *, details: dict[str, Any] | None = None):
+        super().__init__(
+            message,
+            code="conflict",
+            status_code=409,
+            details=details,
+        )
+
+
 class ExternalServiceError(AppError):
     def __init__(self, message: str, *, details: dict[str, Any] | None = None):
         super().__init__(

@@ -23,6 +23,8 @@ class JsonlAuditRepository:
         tenant_id: str,
         project_id: str | None = None,
         event_type: str | None = None,
+        action: str | None = None,
+        resource_type: str | None = None,
         limit: int = 100,
         offset: int = 0,
     ) -> list[dict[str, Any]]:
@@ -44,10 +46,16 @@ class JsonlAuditRepository:
                 continue
             if event_type is not None and event.get("event_type") != event_type:
                 continue
+            if action is not None and event.get("action") != action:
+                continue
+            if resource_type is not None and event.get("resource_type") != resource_type:
+                continue
             if matched < offset:
                 matched += 1
                 continue
-            events.append(event)
+            normalized = dict(event)
+            normalized.setdefault("audit_id", normalized.get("request_id"))
+            events.append(normalized)
             if len(events) >= limit:
                 break
         return events

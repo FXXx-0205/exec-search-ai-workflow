@@ -13,10 +13,12 @@ from app.models.search_request import CandidatesRequest, IntakeRequest, RankRequ
 from app.repositories.factory import get_candidate_repository
 from app.retrieval.retriever import Retriever
 from app.retrieval.vector_store import VectorStore
+from app.services.brief_service import BriefService
 from app.services.candidate_service import CandidateService
 from app.services.job_parser_service import JobParserService
 from app.services.ranking_service import RankingService
 from app.workflows.candidate_search_graph import run_workflow
+from app.workflows.search_workflow import SearchWorkflow
 
 router = APIRouter()
 
@@ -84,6 +86,15 @@ def run(
     """
     Agentic demo entrypoint: run end-to-end workflow and return a compact result.
     """
+    if req.project_id:
+        workflow = SearchWorkflow(
+            parser=_parser,
+            candidate_service=CandidateService(ats_adapter=ats, candidate_repository=get_candidate_repository()),
+            ranking_service=_ranker,
+            brief_service=BriefService(llm=_llm),
+        )
+        result = workflow.run(req.project_id, req.raw_input, access, ats_adapter=ats)
+        return result.model_dump(mode="json")
     state = run_workflow(req.raw_input, tenant_id=access.tenant_id, ats_adapter=ats)
     return {
         "request_id": state.get("request_id"),

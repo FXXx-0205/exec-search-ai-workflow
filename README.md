@@ -191,9 +191,41 @@ streamlit run app/ui/streamlit_app.py
 - `POST /search/candidates` → list candidates from demo pool
 - `POST /search/rank` → score candidates (explainable)
 - `POST /search/run` → run end-to-end agentic workflow (intake + retrieval + ranking + brief + critique)
-- `POST /brief/generate` → generate markdown brief
-- `POST /brief/approve/{brief_id}` → approve a brief for export
-- `GET /brief/{brief_id}/export` → export approved brief (gate enforced)
+- `POST /briefs/generate` → generate markdown brief
+- `POST /briefs/{brief_id}/submit|approve|reject|request-changes|create-revision|export`
+- `GET /briefs/{brief_id}/artifact`
+- `GET /projects/{project_id}/review`
+
+## Reviewer demo
+
+### Minimal startup
+
+```bash
+python3 scripts/seed_review_demo.py --reset
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+streamlit run app/ui/review_console.py
+```
+
+### Reviewer auth context
+
+- Researcher view:
+  `x-tenant-id=demo-review-tenant`
+  `x-user-role=researcher`
+  `x-user-id=demo_researcher`
+- Manager view:
+  `x-tenant-id=demo-review-tenant`
+  `x-user-role=consultant`
+  `x-user-id=demo_manager`
+
+The review console exposes these values in the sidebar, so no real third-party credentials are needed.
+
+### Suggested review flow
+
+1. Open `proj_demo_happy` and inspect summary, latest run, snapshot, latest brief, and audit.
+2. View exported artifact for the happy-path brief.
+3. Open `proj_demo_revision` and create a revision from the `changes_requested` brief.
+4. Submit as researcher, then switch to consultant to approve/export.
+5. Switch back to researcher and confirm approve/export are disabled or rejected.
 
 ## Security / privacy notes (MVP scope)
 
@@ -207,4 +239,3 @@ streamlit run app/ui/streamlit_app.py
 - Audit log + approval workflow
 - Evaluation harness (`tests/evals/`) for parse accuracy, retrieval relevance, ranking agreement, hallucination rate
 - Adapter-based integrations (CRM/email/doc store)
-

@@ -8,14 +8,14 @@ from app.config import settings
 def test_search_candidates_uses_access_context_and_mock_adapter(client: TestClient) -> None:
     response = client.post(
         "/search/candidates",
-        json={"role_spec": {"search_keywords": ["portfolio"]}},
+        json={"role_spec": {"search_keywords": ["infrastructure", "portfolio manager", "institutional"]}},
         headers={"x-user-role": "researcher", "x-tenant-id": "tenant_search"},
     )
 
     body = response.json()
     assert response.status_code == 200
     assert body["tenant_id"] == "tenant_search"
-    assert body["count"] >= 1
+    assert body["count"] > 5
     assert body["candidates"][0]["source_system"] == "mock-ats"
 
 
@@ -71,3 +71,21 @@ def test_search_candidates_accepts_provider_filters(client: TestClient) -> None:
     )
 
     assert response.status_code == 200
+
+
+def test_search_candidates_accepts_structured_role_spec_fields(client: TestClient) -> None:
+    response = client.post(
+        "/search/candidates",
+        json={
+            "role_spec": {
+                "title": {"title": "Infrastructure Portfolio Manager"},
+                "search_keywords": ["infrastructure", "portfolio manager"],
+                "location": {"primary": ["Sydney", "Melbourne"], "country": "Australia"},
+            }
+        },
+        headers={"x-user-role": "researcher", "x-tenant-id": "tenant_search"},
+    )
+
+    body = response.json()
+    assert response.status_code == 200
+    assert body["count"] > 0

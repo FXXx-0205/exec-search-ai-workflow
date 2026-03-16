@@ -41,3 +41,23 @@ def test_brief_list_supports_pagination(client: TestClient) -> None:
     assert body["limit"] == 1
     assert body["offset"] == 1
     assert body["count"] == 1
+
+
+def test_brief_generate_accepts_structured_role_spec_fields(client: TestClient) -> None:
+    response = client.post(
+        "/briefs/generate",
+        json={
+            "role_spec": {
+                "title": {"title": "Infrastructure Portfolio Manager"},
+                "search_keywords": ["infrastructure", "portfolio manager"],
+                "sector": {"name": "Infrastructure"},
+                "location": {"primary": ["Sydney", "Melbourne"], "country": "Australia"},
+            },
+            "candidate_ids": [],
+        },
+        headers={"x-user-role": "researcher", "x-tenant-id": "tenant_structured", "x-user-id": "user_structured"},
+    )
+
+    body = response.json()
+    assert response.status_code == 200
+    assert body["brief_id"]

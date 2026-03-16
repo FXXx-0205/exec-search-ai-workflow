@@ -6,6 +6,7 @@ from typing import Any
 from app.adapters.ats import ATSAdapter, CandidateDocument, CandidateProfile
 from app.adapters.crm import ClientAccount, CRMAdapter, SearchProject
 from app.adapters.doc_store import DocumentStoreAdapter, KnowledgeDocument
+from app.demo.demo_candidates import build_mock_ats_profiles
 
 
 class MockCRMAdapter(CRMAdapter):
@@ -43,20 +44,11 @@ class MockCRMAdapter(CRMAdapter):
 
 class MockATSAdapter(ATSAdapter):
     def search_candidates(self, filters: dict[str, Any], page_token: str | None = None) -> list[CandidateProfile]:
-        return [
-            CandidateProfile(
-                tenant_id="demo-tenant",
-                candidate_id="cand_demo",
-                full_name="Demo Candidate",
-                current_title="Portfolio Manager",
-                source_system="mock-ats",
-                source_id="cand_demo",
-                synced_at=datetime.now(timezone.utc),
-            )
-        ]
+        tenant_id = str(filters.get("tenant_id") or "demo-tenant")
+        return build_mock_ats_profiles(tenant_id=tenant_id)
 
     def get_candidate(self, candidate_id: str) -> CandidateProfile | None:
-        return self.search_candidates({})[0] if candidate_id == "cand_demo" else None
+        return next((candidate for candidate in self.search_candidates({}) if candidate.candidate_id == candidate_id), None)
 
     def get_candidate_documents(self, candidate_id: str) -> list[CandidateDocument]:
         return [

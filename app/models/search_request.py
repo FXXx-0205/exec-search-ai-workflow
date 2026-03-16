@@ -30,3 +30,27 @@ class BriefGenerateRequest(BaseModel):
 class BriefApprovalRequest(BaseModel):
     status: ApprovalStatus = ApprovalStatus.APPROVED
     comment: str | None = Field(default=None, max_length=1000)
+
+
+class ProjectCreateRequest(BaseModel):
+    project_name: str = Field(min_length=1, max_length=255)
+    client_name: str | None = Field(default=None, max_length=255)
+    role_title: str | None = Field(default=None, max_length=255)
+    metadata: dict | None = None
+
+
+class ProjectSearchRunRequest(BaseModel):
+    jd_text: str = Field(min_length=1, max_length=12000)
+    candidate_source: str = Field(default="local_first", max_length=100)
+
+
+class BriefActionRequest(BaseModel):
+    notes: str | None = Field(default=None, max_length=1000)
+
+
+class BriefExportRequest(BaseModel):
+    export_format: str = Field(default="md", max_length=20)
+
+
+class BriefRevisionRequest(BaseModel):
+    content: str | None = Field(default=None, max_length=20000)
